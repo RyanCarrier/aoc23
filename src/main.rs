@@ -4,22 +4,22 @@ use clap::Parser;
 use std::time::{Duration, Instant};
 use util::Problem;
 
-pub mod day0;
+pub mod day1;
 mod util;
 
 #[derive(Parser, Debug)]
 struct Args {
-    #[arg(short, long)]
+    #[arg(short, long, default_value_t = 0)]
     day: usize,
-    #[arg(short, long)]
+    #[arg(short, long, default_value_t = 0)]
     part: usize,
     #[arg(short, long)]
     test: bool,
     #[arg(short, long)]
     benchmark: bool,
 }
-const YEAR: usize = 2022;
-const DAYS: [Problem; 1] = [day0::DAY0];
+const YEAR: usize = 2023;
+const DAYS: [Problem; 1] = [day1::DAY1];
 
 fn main() {
     let args = Args::parse();
@@ -39,13 +39,21 @@ fn main() {
 
 fn run_specific(problem: &Problem, part: usize, test: bool) {
     let input = if test {
-        (problem.test_data)().unwrap()
+        (problem.test_data)()
+            .unwrap()
+            .split('\n')
+            .map(|x| x.to_owned())
+            .collect()
     } else {
         util::get_input_data(YEAR, problem.day)
     };
     let start = Instant::now();
     if test {
-        let test_data = (problem.test_data)().unwrap();
+        let test_data: Vec<String> = (problem.test_data)()
+            .unwrap()
+            .split('\n')
+            .map(|x| x.to_owned())
+            .collect();
         println!(
             "day{}part1TEST:\t{}",
             problem.day,

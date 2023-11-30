@@ -1,4 +1,6 @@
-use std::{fs, path::Path, time::Duration};
+use std::{fs, path::Path, sync::Arc, time::Duration};
+
+use reqwest::{cookie::Jar, Url};
 #[allow(dead_code)]
 pub static TRANSFORMS: [[isize; 2]; 8] = [
     [-1, -1],
@@ -29,21 +31,31 @@ pub fn get_input_data(year: usize, day: usize) -> Vec<String> {
     if !Path::new("./cookie.txt").exists() {
         panic!("cookie in a file called cookie.txt plzx");
     }
-    let cookie = fs::read_to_string("./cookie.txt").unwrap();
-    let client = reqwest::blocking::Client::new();
-    let url = format!("https://adventofcode.com/{}/day/{}/input", year, day);
+    let session_id = fs::read_to_string("./cookie.txt").unwrap();
+    let url = format!("https://adventofcode.com/{}/day/{}/input", year, day)
+        .parse::<Url>()
+        .unwrap();
+    let cookie = format!("session={}", session_id);
+    let jar = Jar::default();
+    jar.add_cookie_str(&cookie, &url);
+    let client = reqwest::blocking::ClientBuilder::new()
+        .cookie_provider(Arc::new(jar))
+        .build()
+        .unwrap();
+
     let resp = client
-        .get(&url)
-        .header("Cookie", format!("session={}", cookie))
+        .get(url)
+        // .header("cookie", format!("session={}", cookie))
         .send()
         .unwrap();
     let body = resp.text().unwrap();
     body.split('\n').map(|x| x.to_owned()).collect()
 }
 
+#[derive(Clone, Copy)]
 pub struct Problem {
     pub day: usize,
     pub part1: fn(input: Vec<String>) -> String,
     pub part2: fn(input: Vec<String>) -> String,
-    pub test_data: fn() -> Option<Vec<String>>,
+    pub test_data: fn() -> Option<String>,
 }
