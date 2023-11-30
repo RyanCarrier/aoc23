@@ -1,53 +1,81 @@
 //i don't recall what this was for
 use ansi_term::Style;
+use clap::Parser;
 use std::time::{Duration, Instant};
+use util::Problem;
+
 pub mod day0;
 mod util;
 
+#[derive(Parser, Debug)]
 struct Args {
+    #[arg(short, long)]
     day: usize,
+    #[arg(short, long)]
     part: usize,
+    #[arg(short, long)]
     test: bool,
+    #[arg(short, long)]
     benchmark: bool,
 }
+const YEAR: usize = 2022;
+const DAYS: [Problem; 1] = [day0::DAY0];
 
 fn main() {
-    let run_benchmark = !true;
-    let fns = vec![[day1::part1, day1::part2]];
-    if run_benchmark {
-        benchmark(fns);
+    let args = Args::parse();
+    if args.benchmark {
+        benchmark(args);
         return;
     }
-    let day = fns.len();
-    run_specific(fns, day);
-    // run_bench(fns, 13, 2000);
+    if args.day == 0 {
+        //just assume
+        for day in 1..=DAYS.len() {
+            run_specific(&DAYS[day - 1], args.part, args.test);
+        }
+        return;
+    }
+    run_specific(&DAYS[args.day - 1], args.part, args.test);
 }
 
-fn run_specific(fns: Vec<[fn(Vec<String>) -> String; 2]>, n: usize) {
+fn run_specific(problem: &Problem, part: usize, test: bool) {
+    let input = if test {
+        (problem.test_data)().unwrap()
+    } else {
+        util::get_input_data(YEAR, problem.day)
+    };
     let start = Instant::now();
-    println!(
-        "day{}part{}test:\t{}",
-        n,
-        1,
-        fns[n - 1][0](util::get_test_from_file(n))
-    );
+    if test {
+        let test_data = (problem.test_data)().unwrap();
+        println!(
+            "day{}part1TEST:\t{}",
+            problem.day,
+            (problem.part1)(test_data.clone())
+        );
+        println!(
+            "day{}part2TEST:\t{}",
+            problem.day,
+            (problem.part2)(test_data.clone())
+        );
+    }
     let test_duration = start.elapsed();
-    println!(
-        "day{}part{}:\t{}",
-        n,
-        1,
-        fns[n - 1][0](util::get_from_file(n))
-    );
+    if part == 0 || part == 1 {
+        println!(
+            "day{}part1:\t{}",
+            problem.day,
+            (problem.part1)(input.clone())
+        );
+    }
     let part1_duration = start.elapsed() - test_duration;
-    println!(
-        "day{}part{}:\t{}",
-        n,
-        2,
-        fns[n - 1][1](util::get_from_file(n))
-    );
+    if part == 0 || part == 2 {
+        println!(
+            "day{}part2:\t{}",
+            problem.day,
+            (problem.part2)(input.clone())
+        );
+    }
     let total_duration = start.elapsed();
     println!(
-        "Completed in {}\t(p1t:{}, p1:{}, p2:{})",
+        "Completed in {}\t(pt:{}, p1:{}, p2:{})",
         util::format_duration(total_duration),
         util::format_duration(test_duration),
         util::format_duration(part1_duration),
@@ -55,55 +83,31 @@ fn run_specific(fns: Vec<[fn(Vec<String>) -> String; 2]>, n: usize) {
     );
 }
 
-#[allow(dead_code)]
-fn run_bench(fns: Vec<[fn(Vec<String>) -> String; 2]>, n: usize, repeats: usize) {
-    let input = util::get_from_file(n);
-    let inputs: Vec<Vec<String>> = (0..repeats).map(|_| input.clone()).collect();
-    let total_start = Instant::now();
-    for input in inputs {
-        let _ = fns[n - 1][0](input);
+fn benchmark(args: Args) {
+    let range = if args.day == 0 {
+        0..DAYS.len()
+    } else {
+        (args.day - 1)..(args.day)
+    };
+    let max = if args.day == 0 { DAYS.len() } else { args.day };
+    let mut data = vec![vec![String::new()]; max];
+    for day in range.clone() {
+        data[day] = util::get_input_data(YEAR, day + 1);
     }
-    let duration1 = total_start.elapsed();
-
-    let inputs: Vec<Vec<String>> = (0..repeats).map(|_| input.clone()).collect();
-    let start2 = Instant::now();
-    for input in inputs {
-        let _ = fns[n - 1][1](input);
-    }
-    let duration2 = start2.elapsed();
-    let total_duration = duration1 + duration2;
-    println!("Part1 in {}μs", duration1.as_micros() / repeats as u128);
-    println!("Part2 in {}μs", duration2.as_micros() / repeats as u128);
-    println!(
-        "Completed in {}μs",
-        total_duration.as_micros() / repeats as u128
-    );
-    println!(
-        "p1 result:{}, p2 result:{}",
-        fns[n - 1][0](input.clone()),
-        fns[n - 1][1](input.clone())
-    );
-}
-
-fn benchmark(fns: Vec<[fn(Vec<String>) -> String; 2]>) {
-    let mut data = vec![vec![String::new()]; fns.len()];
-    for day in 0..fns.len() {
-        data[day] = util::get_from_file(day + 1);
-    }
-    let mut durations = vec![Duration::default(); fns.len()];
+    let mut durations = vec![Duration::default(); max];
 
     let total_start = Instant::now();
-    for day in 0..fns.len() {
+    for day in range.clone() {
         let part1 = data[day].clone();
         let part2 = data[day].clone();
         let start = Instant::now();
-        fns[day][0](part1);
-        fns[day][1](part2);
+        (DAYS[day].part1)(part1);
+        (DAYS[day].part2)(part2);
         durations[day] = start.elapsed();
     }
     let total_duration = total_start.elapsed();
     println!("{}", Style::new().bold().paint("Day durations"));
-    for day in 0..fns.len() {
+    for day in range.clone() {
         println!(
             "Day {}:\t{:.1}ms",
             day + 1,

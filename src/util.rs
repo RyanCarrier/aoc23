@@ -1,4 +1,5 @@
 use std::{fs, path::Path, time::Duration};
+#[allow(dead_code)]
 pub static TRANSFORMS: [[isize; 2]; 8] = [
     [-1, -1],
     [-1, 0],
@@ -23,7 +24,7 @@ pub fn format_duration(d: Duration) -> String {
     format!("{}ns", d.as_nanos())
 }
 
-fn get_input_data(year: usize, day: usize) -> Vec<String> {
+pub fn get_input_data(year: usize, day: usize) -> Vec<String> {
     // get input data from aoc using cookie
     if !Path::new("./cookie.txt").exists() {
         panic!("cookie in a file called cookie.txt plzx");
@@ -40,8 +41,9 @@ fn get_input_data(year: usize, day: usize) -> Vec<String> {
     body.split('\n').map(|x| x.to_owned()).collect()
 }
 
-pub trait Problem {
-    fn part1(input: Vec<String>) -> String;
-    fn part2(input: Vec<String>) -> String;
-    fn test_data() -> Option<String>;
+pub struct Problem {
+    pub day: usize,
+    pub part1: fn(input: Vec<String>) -> String,
+    pub part2: fn(input: Vec<String>) -> String,
+    pub test_data: fn() -> Option<Vec<String>>,
 }
