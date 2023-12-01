@@ -5,6 +5,7 @@ use std::time::{Duration, Instant};
 use util::Problem;
 
 pub mod day1;
+pub mod jamz;
 mod util;
 
 #[derive(Parser, Debug)]
@@ -17,9 +18,12 @@ struct Args {
     test: bool,
     #[arg(short, long)]
     benchmark: bool,
+    #[arg(short, long)]
+    virgin: bool,
 }
 const YEAR: usize = 2023;
 const DAYS: [Problem; 1] = [day1::DAY1];
+const JAMZ: [Problem; 1] = [jamz::day1::DAY1];
 
 fn main() {
     let args = Args::parse();
@@ -87,12 +91,23 @@ fn run_specific(problem: &Problem, part: usize, test: bool) {
 }
 
 fn benchmark(args: Args) {
+    let problems = if args.virgin {
+        println!("Running virgin mode activated");
+        JAMZ
+    } else {
+        println!("Running default high speed computations");
+        DAYS
+    };
     let range = if args.day == 0 {
-        0..DAYS.len()
+        0..problems.len()
     } else {
         (args.day - 1)..(args.day)
     };
-    let max = if args.day == 0 { DAYS.len() } else { args.day };
+    let max = if args.day == 0 {
+        problems.len()
+    } else {
+        args.day
+    };
     let mut data = vec![vec![String::new()]; max];
     for day in range.clone() {
         data[day] = util::get_input_data(YEAR, day + 1);
@@ -104,17 +119,17 @@ fn benchmark(args: Args) {
         let part1 = data[day].clone();
         let part2 = data[day].clone();
         let start = Instant::now();
-        (DAYS[day].part1)(part1);
-        (DAYS[day].part2)(part2);
+        (problems[day].part1)(part1);
+        (problems[day].part2)(part2);
         durations[day] = start.elapsed();
     }
     let total_duration = total_start.elapsed();
     println!("{}", Style::new().bold().paint("Day durations"));
     for day in range.clone() {
         println!(
-            "Day {}:\t{:.1}ms",
+            "Day {}:\t{}",
             day + 1,
-            durations[day].as_micros() as f64 / 1000 as f64
+            util::format_duration(durations[day])
         );
     }
     println!(
