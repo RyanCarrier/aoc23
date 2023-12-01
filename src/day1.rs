@@ -10,33 +10,66 @@ pub const DAY1: Problem = Problem {
 pub fn part1(lines: Vec<String>) -> String {
     let mut total = 0;
     for l in lines {
-        let mut num = 0;
         for c in l.chars() {
             if c.is_numeric() {
-                num = c.to_string().parse::<i32>().unwrap() * 10;
+                total += c.to_string().parse::<i32>().unwrap() * 10;
                 break;
             }
         }
         for c in l.chars().rev() {
             if c.is_numeric() {
-                num += c.to_string().parse::<i32>().unwrap();
+                total += c.to_string().parse::<i32>().unwrap();
                 break;
             }
         }
-        total += num;
     }
     format!("{}", total)
 }
 
 pub fn part2(lines: Vec<String>) -> String {
-    return "".to_owned();
+    //look we should break this out to fn's but yolo
+    let replace = [
+        "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+    ];
+    let mut total = 0;
+    for l in lines {
+        let chars: Vec<char> = l.chars().collect();
+        'first: for i in 0..chars.len() {
+            if chars[i].is_numeric() {
+                total += chars[i].to_string().parse::<i32>().unwrap() * 10;
+                break;
+            }
+            for j in 0..replace.len() {
+                if l[i..].starts_with(replace[j]) {
+                    total += (j + 1) as i32 * 10;
+                    break 'first;
+                }
+            }
+        }
+        'second: for i in (0..chars.len()).rev() {
+            if chars[i].is_numeric() {
+                total += chars[i].to_string().parse::<i32>().unwrap();
+                break;
+            }
+            for j in 0..replace.len() {
+                if l[i..].starts_with(replace[j]) {
+                    total += (j + 1) as i32;
+                    break 'second;
+                }
+            }
+        }
+    }
+    format!("{}", total)
 }
 pub fn test_data() -> Option<String> {
     Some(
-        "1abc2
-pqr3stu8vwx
-a1b2c3d4e5f
-treb7uchet"
+        "two1nine
+eightwothree
+abcone2threexyz
+xtwone3four
+4nineeightseven2
+zoneight234
+7pqrstsixteen"
             .to_owned(),
     )
 }
