@@ -49,20 +49,15 @@ fn run_specific(problem: &Problem, part: usize, test: bool) {
     };
     let start = Instant::now();
     if test {
-        let test_data: Vec<String> = (problem.test_data)()
-            .unwrap()
-            .split('\n')
-            .map(|x| x.to_owned())
-            .collect();
         println!(
             "day{}part1TEST:\t{}",
             problem.day,
-            (problem.part1)(test_data.clone())
+            (problem.part1)(input.clone())
         );
         println!(
             "day{}part2TEST:\t{}",
             problem.day,
-            (problem.part2)(test_data.clone())
+            (problem.part2)(input.clone())
         );
     }
     let test_duration = start.elapsed();
