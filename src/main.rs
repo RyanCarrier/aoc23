@@ -22,7 +22,7 @@ struct Args {
     virgin: bool,
 }
 const YEAR: usize = 2023;
-const DAYS: [Problem; 1] = [days::day1::DAY1];
+const DAYS: [Problem; 2] = [days::day1::DAY1, days::day2::DAY2];
 const JAMZ: [Problem; 1] = [jamz::day1::DAY1];
 
 fn main() {
@@ -31,7 +31,11 @@ fn main() {
         benchmark(args);
         return;
     }
-    let problems = if args.virgin { JAMZ } else { DAYS };
+    let problems = if args.virgin {
+        JAMZ.to_vec()
+    } else {
+        DAYS.to_vec()
+    };
     if args.day == 0 {
         //just assume
         for day in 1..=problems.len() {
@@ -44,11 +48,12 @@ fn main() {
 
 fn run_specific(problem: &Problem, args: &Args) {
     let input = if args.test {
-        (problem.test_data)()
-            .unwrap()
-            .split('\n')
-            .map(|x| x.to_owned())
-            .collect()
+        (problem
+            .test_data
+            .expect("Asked for test data, but there was none set"))()
+        .split('\n')
+        .map(|x| x.to_owned())
+        .collect()
     } else {
         util::get_input_data(YEAR, problem.day)
     };
@@ -83,10 +88,10 @@ fn benchmark(args: Args) {
     const RUNS: usize = 100;
     let problems = if args.virgin {
         println!("Running virgin mode activated");
-        JAMZ
+        JAMZ.to_vec()
     } else {
         println!("Running default high speed computations");
-        DAYS
+        DAYS.to_vec()
     };
     let range = if args.day == 0 {
         0..problems.len()

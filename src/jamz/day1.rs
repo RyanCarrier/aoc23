@@ -5,7 +5,7 @@ pub const DAY1: Problem = Problem {
     day: 1,
     part1,
     part2,
-    test_data: || None,
+    test_data: None,
 };
 
 fn part1(lines: &Vec<String>) -> String {
