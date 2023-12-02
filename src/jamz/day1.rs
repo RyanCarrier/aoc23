@@ -8,12 +8,21 @@ pub const DAY1: Problem = Problem {
     test_data: || None,
 };
 
-fn part1(lines: Vec<String>) -> String {
-    let lines: Vec<&str> = lines.iter().map(|l| l as &str).collect();
-    solve_a(lines).to_string()
+fn part1(lines: &Vec<String>) -> String {
+    let lines: Vec<&str> = lines
+        .iter()
+        .map(|l| l as &str)
+        .filter(|l| !l.is_empty())
+        .collect();
+    return lines[0].to_owned();
+    // solve_a(lines).to_string()
 }
-fn part2(lines: Vec<String>) -> String {
-    let lines: Vec<&str> = lines.iter().map(|l| l as &str).collect();
+fn part2(lines: &Vec<String>) -> String {
+    let lines: Vec<&str> = lines
+        .iter()
+        .map(|l| l as &str)
+        .filter(|l| !l.is_empty())
+        .collect();
     solve(lines).to_string()
 }
 // Left part A solution for posterity

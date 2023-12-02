@@ -31,18 +31,19 @@ fn main() {
         benchmark(args);
         return;
     }
+    let problems = if args.virgin { JAMZ } else { DAYS };
     if args.day == 0 {
         //just assume
-        for day in 1..=DAYS.len() {
-            run_specific(&DAYS[day - 1], args.part, args.test);
+        for day in 1..=problems.len() {
+            run_specific(&problems[day - 1], &args);
         }
         return;
     }
-    run_specific(&DAYS[args.day - 1], args.part, args.test);
+    run_specific(&problems[args.day - 1], &args);
 }
 
-fn run_specific(problem: &Problem, part: usize, test: bool) {
-    let input = if test {
+fn run_specific(problem: &Problem, args: &Args) {
+    let input = if args.test {
         (problem.test_data)()
             .unwrap()
             .split('\n')
@@ -52,45 +53,34 @@ fn run_specific(problem: &Problem, part: usize, test: bool) {
         util::get_input_data(YEAR, problem.day)
     };
     let start = Instant::now();
-    if test {
-        println!(
-            "day{}part1TEST:\t{}",
-            problem.day,
-            (problem.part1)(input.clone())
-        );
-        println!(
-            "day{}part2TEST:\t{}",
-            problem.day,
-            (problem.part2)(input.clone())
-        );
+    if args.part == 0 || args.part == 1 {
+        print_result(problem, args.virgin, 1, args.test, (problem.part1)(&input));
     }
-    let test_duration = start.elapsed();
-    if part == 0 || part == 1 {
-        println!(
-            "day{}part1:\t{}",
-            problem.day,
-            (problem.part1)(input.clone())
-        );
-    }
-    let part1_duration = start.elapsed() - test_duration;
-    if part == 0 || part == 2 {
-        println!(
-            "day{}part2:\t{}",
-            problem.day,
-            (problem.part2)(input.clone())
-        );
+    let part1_duration = start.elapsed();
+    if args.part == 0 || args.part == 2 {
+        print_result(problem, args.virgin, 2, args.test, (problem.part2)(&input));
     }
     let total_duration = start.elapsed();
     println!(
-        "Completed in {}\t(pt:{}, p1:{}, p2:{})",
+        "Completed in {}\t(p1:{}, p2:{})",
         util::format_duration(total_duration),
-        util::format_duration(test_duration),
         util::format_duration(part1_duration),
-        util::format_duration(total_duration - test_duration - part1_duration)
+        util::format_duration(total_duration - part1_duration)
+    );
+}
+fn print_result(problem: &Problem, virgin: bool, part: usize, test: bool, result: String) {
+    println!(
+        "day{}part{}{}{}:\t{}",
+        problem.day,
+        part,
+        if virgin { "-JAMZ" } else { "" },
+        if test { "-TEST" } else { "" },
+        result
     );
 }
 
 fn benchmark(args: Args) {
+    const RUNS: usize = 100;
     let problems = if args.virgin {
         println!("Running virgin mode activated");
         JAMZ
@@ -112,31 +102,39 @@ fn benchmark(args: Args) {
     for day in range.clone() {
         data[day] = util::get_input_data(YEAR, day + 1);
     }
-    let mut durations = vec![Duration::default(); max];
-
-    let total_start = Instant::now();
+    let mut part1_durations = vec![Duration::default(); max];
+    let mut part2_durations = vec![Duration::default(); max];
     for day in range.clone() {
-        let part1 = data[day].clone();
-        let part2 = data[day].clone();
         let start = Instant::now();
-        (problems[day].part1)(part1);
-        (problems[day].part2)(part2);
-        durations[day] = start.elapsed();
+        for _ in 0..RUNS {
+            (problems[day].part1)(&data[day]);
+        }
+        part1_durations[day] = start.elapsed().div_f64(RUNS as f64);
+        let start = Instant::now();
+        for _ in RUNS..(RUNS * 2) {
+            (problems[day].part2)(&data[day]);
+        }
+        part2_durations[day] = start.elapsed().div_f64(RUNS as f64);
     }
-    let total_duration = total_start.elapsed();
     println!("{}", Style::new().bold().paint("Day durations"));
+    println!("Day\t\tPart1\tPart2\tTotal");
+    let mut total_duration = Duration::default();
     for day in range.clone() {
         println!(
-            "Day {}:\t{}",
+            "Day {}:\t\t{}\t{}\t{}",
             day + 1,
-            util::format_duration(durations[day])
+            util::format_duration(part1_durations[day]),
+            util::format_duration(part2_durations[day]),
+            Style::new().bold().paint(util::format_duration(
+                part1_durations[day] + part2_durations[day]
+            ))
         );
+        total_duration += part1_durations[day] + part2_durations[day];
     }
     println!(
         "{}",
-        Style::new().bold().paint(format!(
-            "Total:\t{}ms",
-            total_duration.as_millis().to_string()
-        ))
+        Style::new()
+            .bold()
+            .paint(format!("Total:\t{}", util::format_duration(total_duration)))
     );
 }

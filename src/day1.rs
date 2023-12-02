@@ -7,7 +7,7 @@ pub const DAY1: Problem = Problem {
     test_data,
 };
 
-pub fn part1(lines: Vec<String>) -> String {
+pub fn part1(lines: &Vec<String>) -> String {
     let mut total = 0;
     for l in lines {
         for c in l.chars() {
@@ -26,7 +26,7 @@ pub fn part1(lines: Vec<String>) -> String {
     format!("{}", total)
 }
 
-pub fn part2(lines: Vec<String>) -> String {
+pub fn part2(lines: &Vec<String>) -> String {
     //look we should break this out to fn's but yolo
     let replace = [
         "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",

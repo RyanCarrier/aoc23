@@ -55,7 +55,7 @@ pub fn get_input_data(year: usize, day: usize) -> Vec<String> {
 #[derive(Clone, Copy)]
 pub struct Problem {
     pub day: usize,
-    pub part1: fn(input: Vec<String>) -> String,
-    pub part2: fn(input: Vec<String>) -> String,
+    pub part1: fn(input: &Vec<String>) -> String,
+    pub part2: fn(input: &Vec<String>) -> String,
     pub test_data: fn() -> Option<String>,
 }
