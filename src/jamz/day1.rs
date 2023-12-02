@@ -23,9 +23,11 @@ fn part2(lines: &Vec<String>) -> String {
         .map(|l| l as &str)
         .filter(|l| !l.is_empty())
         .collect();
+
     solve(lines).to_string()
 }
 // Left part A solution for posterity
+#[allow(dead_code)] //dead slow code that is lmao gottem
 fn solve_a(input: Vec<&str>) -> usize {
     let parse_calibration_value = |line: &str| -> usize {
         let mut digits = line.chars().filter_map(|c| c.to_digit(10));

@@ -4,7 +4,7 @@ use clap::Parser;
 use std::time::{Duration, Instant};
 use util::Problem;
 
-pub mod day1;
+pub mod days;
 pub mod jamz;
 mod util;
 
@@ -22,7 +22,7 @@ struct Args {
     virgin: bool,
 }
 const YEAR: usize = 2023;
-const DAYS: [Problem; 1] = [day1::DAY1];
+const DAYS: [Problem; 1] = [days::day1::DAY1];
 const JAMZ: [Problem; 1] = [jamz::day1::DAY1];
 
 fn main() {
