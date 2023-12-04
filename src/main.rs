@@ -22,7 +22,12 @@ struct Args {
     virgin: bool,
 }
 const YEAR: usize = 2023;
-const DAYS: [Problem; 3] = [days::day1::DAY1, days::day2::DAY2, days::day3::DAY3];
+const DAYS: [Problem; 4] = [
+    days::day1::DAY1,
+    days::day2::DAY2,
+    days::day3::DAY3,
+    days::day4::DAY4,
+];
 const JAMZ: [Problem; 1] = [jamz::day1::DAY1];
 
 fn main() {
