@@ -90,7 +90,7 @@ fn print_result(problem: &Problem, virgin: bool, part: usize, test: bool, result
 }
 
 fn benchmark(args: Args) {
-    const RUNS: usize = 100;
+    const RUNS: usize = 1000;
     let problems = if args.virgin {
         println!("Running virgin mode activated");
         JAMZ.to_vec()
