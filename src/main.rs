@@ -111,11 +111,17 @@ fn benchmark(args: Args) {
         args.day
     };
     let mut data = vec![vec![String::new()]; max];
+    print!("Getting input data... ");
     for day in range.clone() {
+        print!("{}... ", day + 1);
         data[day] = util::get_input_data(YEAR, day + 1);
     }
+    println!("");
+    println!("{}", Style::new().bold().paint("Day durations"));
+    println!("Day\t\tPart1\tPart2\tTotal");
     let mut part1_durations = vec![Duration::default(); max];
     let mut part2_durations = vec![Duration::default(); max];
+    let mut total_duration = Duration::default();
     for day in range.clone() {
         let start = Instant::now();
         for _ in 0..RUNS {
@@ -127,11 +133,6 @@ fn benchmark(args: Args) {
             (problems[day].part2)(&data[day]);
         }
         part2_durations[day] = start.elapsed().div_f64(RUNS as f64);
-    }
-    println!("{}", Style::new().bold().paint("Day durations"));
-    println!("Day\t\tPart1\tPart2\tTotal");
-    let mut total_duration = Duration::default();
-    for day in range.clone() {
         println!(
             "Day {}:\t\t{}\t{}\t{}",
             day + 1,
