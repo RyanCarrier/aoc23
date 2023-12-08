@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 use crate::util::{self, Problem};
 
@@ -36,11 +36,10 @@ pub fn part1(lines: &Vec<String>) -> String {
                         let number = l[number_index..number_index + number_len]
                             .iter()
                             .collect::<String>();
-                        let number = number.parse::<i32>().expect("Failed to parse number");
+                        let number = number.parse::<usize>().expect("Failed to parse number");
                         total += number;
                     }
                     is_number = false;
-                    touching_symbol = false;
                 }
             } else if l[j].is_numeric() {
                 if is_number {
@@ -49,6 +48,7 @@ pub fn part1(lines: &Vec<String>) -> String {
                     is_number = true;
                     number_index = j;
                     number_len = 1;
+                    touching_symbol = false;
                 }
             }
             if is_number && !touching_symbol {
@@ -71,21 +71,16 @@ pub fn part1(lines: &Vec<String>) -> String {
     format!("{}", total)
 }
 
-struct GearNumber {
-    number: i32,
-    gears: Vec<(usize, usize)>,
-}
-
 pub fn part2(lines: &Vec<String>) -> String {
     let mut is_number = false;
     let mut number_index = 0;
     let mut number_len = 0;
     let mut gears: Vec<(usize, usize)> = Vec::new();
-    let mut numbers: Vec<GearNumber> = Vec::new();
     let lines = lines
         .iter()
         .map(|x| x.chars().collect())
         .collect::<Vec<Vec<char>>>();
+    let mut all_gear_numbers: HashMap<(usize, usize), Vec<usize>> = HashMap::new();
     for i in 0..lines.len() {
         let l = &lines[i];
         for j in 0..l.len() + 1 {
@@ -97,10 +92,12 @@ pub fn part2(lines: &Vec<String>) -> String {
                         let number = l[number_index..number_index + number_len]
                             .iter()
                             .collect::<String>();
-                        let number = number.parse::<i32>().expect("Failed to parse number");
-                        numbers.push(GearNumber {
-                            number,
-                            gears: gears.clone(),
+                        let number = number.parse::<usize>().expect("Failed to parse number");
+                        gears.iter().for_each(|g| {
+                            all_gear_numbers
+                                .entry(*g)
+                                .or_insert(Vec::new())
+                                .push(number);
                         });
                     }
                     is_number = false;
@@ -127,24 +124,20 @@ pub fn part2(lines: &Vec<String>) -> String {
                         let new_i = new_i as usize;
                         let new_j = new_j as usize;
                         if lines[new_i][new_j] == '*' {
-                            gears.push((new_i, new_j));
+                            if !gears.contains(&(new_i, new_j)) {
+                                gears.push((new_i, new_j));
+                            }
                         }
                     }
                 });
             }
         }
     }
-    let all_gears: HashSet<(usize, usize)> = numbers.iter().fold(HashSet::new(), |mut v, n| {
-        v.extend(n.gears.clone().iter());
-        v
-    });
-    let mut total = 0;
-    for g in all_gears {
-        let touching: Vec<&GearNumber> = numbers.iter().filter(|n| n.gears.contains(&g)).collect();
-        if touching.len() == 2 {
-            total += touching[0].number * touching[1].number;
-        }
-    }
+    let total = all_gear_numbers
+        .values()
+        .filter(|v| v.len() == 2)
+        .map(|v| v[0] * v[1])
+        .sum::<usize>();
     format!("{}", total)
 }
 pub fn test_data() -> String {
