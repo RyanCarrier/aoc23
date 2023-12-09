@@ -18,11 +18,13 @@ struct Args {
     test: bool,
     #[arg(short, long)]
     benchmark: bool,
+    #[arg(short, long, default_value_t = 1_000)]
+    iterations: usize,
     #[arg(short, long)]
     virgin: bool,
 }
 const YEAR: usize = 2023;
-const DAYS: [Problem; 8] = [
+const DAYS: [Problem; 9] = [
     days::day1::DAY1,
     days::day2::DAY2,
     days::day3::DAY3,
@@ -31,6 +33,7 @@ const DAYS: [Problem; 8] = [
     days::day6::DAY6,
     days::day7::DAY7,
     days::day8::DAY8,
+    days::day9::DAY9,
 ];
 const JAMZ: [Problem; 1] = [jamz::day1::DAY1];
 
@@ -56,6 +59,12 @@ fn main() {
 }
 
 fn run_specific(problem: &Problem, args: &Args) {
+    println!(
+        "{}",
+        Style::new()
+            .bold()
+            .paint("=== Day ".to_owned() + &problem.day.to_string() + " ==="),
+    );
     let input = if args.test {
         (problem
             .test_data
@@ -94,7 +103,7 @@ fn print_result(problem: &Problem, virgin: bool, part: usize, test: bool, result
 }
 
 fn benchmark(args: Args) {
-    const RUNS: usize = 1000;
+    let runs: usize = args.iterations;
     let problems = if args.virgin {
         println!("Running virgin mode activated");
         JAMZ.to_vec()
@@ -119,22 +128,26 @@ fn benchmark(args: Args) {
         data[day] = util::get_input_data(YEAR, day + 1);
     }
     println!("");
-    println!("{}", Style::new().bold().paint("Day durations"));
+    println!(
+        "{}, {} iterations",
+        Style::new().bold().paint("Day durations"),
+        runs
+    );
     println!("Day\t\tPart1\tPart2\tTotal");
     let mut part1_durations = vec![Duration::default(); max];
     let mut part2_durations = vec![Duration::default(); max];
     let mut total_duration = Duration::default();
     for day in range.clone() {
         let start = Instant::now();
-        for _ in 0..RUNS {
+        for _ in 0..runs {
             (problems[day].part1)(&data[day]);
         }
-        part1_durations[day] = start.elapsed().div_f64(RUNS as f64);
+        part1_durations[day] = start.elapsed().div_f64(runs as f64);
         let start = Instant::now();
-        for _ in RUNS..(RUNS * 2) {
+        for _ in runs..(runs * 2) {
             (problems[day].part2)(&data[day]);
         }
-        part2_durations[day] = start.elapsed().div_f64(RUNS as f64);
+        part2_durations[day] = start.elapsed().div_f64(runs as f64);
         println!(
             "Day {}:\t\t{}\t{}\t{}",
             day + 1,

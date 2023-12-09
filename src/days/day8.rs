@@ -117,7 +117,7 @@ pub fn part2(lines: &Vec<String>) -> String {
     let lcm = initial.iter().fold(1, |acc, &x| lcm(acc, x));
     format!("{:?}", lcm * data.instructions.len())
 }
-pub fn test_data() -> String {
+pub fn test_data() -> &'static str {
     "RL
 
 AAA = (BBB, CCC)
@@ -127,7 +127,6 @@ DDD = (DDD, DDD)
 EEE = (EEE, EEE)
 GGG = (GGG, GGG)
 ZZZ = (ZZZ, ZZZ)"
-        .to_owned()
 }
 
 fn import(lines: &Vec<String>) -> Day8Data {

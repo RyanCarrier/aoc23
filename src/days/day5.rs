@@ -193,7 +193,7 @@ pub fn part2(lines: &Vec<String>) -> String {
     }
     format!("{}", min)
 }
-pub fn test_data() -> String {
+pub fn test_data() -> &'static str {
     "seeds: 79 14 55 13
 
 seed-to-soil map:
@@ -228,7 +228,6 @@ humidity-to-location map:
 60 56 37
 56 93 4
 "
-    .to_owned()
 }
 
 fn import(lines: &Vec<String>) -> Day5Data {

@@ -19,8 +19,8 @@ pub fn part2(lines: &Vec<String>) -> String {
     // let data = import(lines);
     "".to_owned()
 }
-pub fn test_data() -> String {
-    "".to_owned()
+pub fn test_data() -> &'static str {
+    ""
 }
 
 fn import(lines: &Vec<String>) -> Day0Data {

@@ -110,13 +110,12 @@ pub fn part2(lines: &Vec<String>) -> String {
         .fold(0, |acc, (i, x)| acc + x.bid * (i + 1));
     format!("{}", result)
 }
-pub fn test_data() -> String {
+pub fn test_data() -> &'static str {
     "32T3K 765
 T55J5 684
 KK677 28
 KTJJT 220
 QQQJA 483"
-        .to_owned()
 }
 
 fn import(lines: &Vec<String>, pt2: bool) -> Vec<Hand> {

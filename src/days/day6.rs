@@ -55,10 +55,9 @@ pub fn part2(lines: &Vec<String>) -> String {
     let data = import_pt2(lines);
     format!("{}", data.races[0].ways_to_win())
 }
-pub fn test_data() -> String {
+pub fn test_data() -> &'static str {
     "Time:      7  15   30
 Distance:  9  40  200"
-        .to_owned()
 }
 fn import_pt2(lines: &Vec<String>) -> Day6Data {
     //probably not needed half the time

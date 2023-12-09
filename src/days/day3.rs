@@ -140,7 +140,7 @@ pub fn part2(lines: &Vec<String>) -> String {
         .sum::<usize>();
     format!("{}", total)
 }
-pub fn test_data() -> String {
+pub fn test_data() -> &'static str {
     "467..114..
 ...*......
 ..35..633.
@@ -152,5 +152,4 @@ pub fn test_data() -> String {
 ...$.*....
 .664.598..
 "
-    .to_owned()
 }

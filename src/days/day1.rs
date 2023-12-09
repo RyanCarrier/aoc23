@@ -61,7 +61,7 @@ pub fn part2(lines: &Vec<String>) -> String {
     }
     format!("{}", total)
 }
-pub fn test_data() -> String {
+pub fn test_data() -> &'static str {
     "two1nine
 eightwothree
 abcone2threexyz
@@ -69,7 +69,6 @@ xtwone3four
 4nineeightseven2
 zoneight234
 7pqrstsixteen"
-        .to_owned()
 }
 
 // fn import(lines: Vec<String>) -> Day0Data {

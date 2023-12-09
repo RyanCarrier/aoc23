@@ -57,5 +57,5 @@ pub struct Problem {
     pub day: usize,
     pub part1: fn(input: &Vec<String>) -> String,
     pub part2: fn(input: &Vec<String>) -> String,
-    pub test_data: Option<fn() -> String>,
+    pub test_data: Option<fn() -> &'static str>,
 }
