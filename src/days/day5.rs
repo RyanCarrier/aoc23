@@ -162,7 +162,6 @@ pub fn part1(lines: &Vec<String>) -> String {
                     break;
                 }
             }
-            //i=i, (no mapping found)
         }
         i
     });
@@ -190,7 +189,6 @@ fn min_map(start: usize, end: usize, layer_index: usize, mappings: &Vec<Vec<Mapp
         //THESE ARE SUPPOSE TO BE SORTED???
         //&& start < mappings[layer_index][j].from_max() {
         let map = mappings[layer_index][j];
-        //TODO: and what about if the mapping is within the range but not within the start
         if map.contains(&start) {
             if end <= map.from_max() {
                 return min_map(map.map(&start), map.map(&end), layer_index + 1, mappings);
