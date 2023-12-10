@@ -146,6 +146,9 @@ impl Mapping {
     fn from_max(&self) -> usize {
         self.from + self.range
     }
+    fn to_max(&self) -> usize {
+        self.to + self.range
+    }
 }
 
 pub fn part1(lines: &Vec<String>) -> String {
@@ -167,6 +170,46 @@ pub fn part1(lines: &Vec<String>) -> String {
 }
 
 pub fn part2(lines: &Vec<String>) -> String {
+    let data = import(lines);
+    let new_seeds: Vec<[usize; 2]> = (0..data.seeds.len())
+        .step_by(2)
+        .map(|i| [data.seeds[i], (data.seeds[i] + data.seeds[i + 1])])
+        .collect();
+    let mut min = usize::MAX;
+    for seed_set in new_seeds {
+        min = min.min(min_map(seed_set[0], seed_set[1], 0, &data.maps));
+    }
+    format!("{}", min)
+}
+fn min_map(start: usize, end: usize, layer_index: usize, mappings: &Vec<Vec<Mapping>>) -> usize {
+    if layer_index >= mappings.len() {
+        return start;
+    }
+    let mut j = 0;
+    while j < mappings[layer_index].len() {
+        //THESE ARE SUPPOSE TO BE SORTED???
+        //&& start < mappings[layer_index][j].from_max() {
+        let map = mappings[layer_index][j];
+        //TODO: and what about if the mapping is within the range but not within the start
+        if map.contains(&start) {
+            if end <= map.from_max() {
+                return min_map(map.map(&start), map.map(&end), layer_index + 1, mappings);
+            }
+            //try without +1
+            let section1 = min_map(map.map(&start), map.to_max(), layer_index + 1, mappings);
+            let section2 = min_map(map.from_max(), end, layer_index, mappings);
+            return section1.min(section2);
+        }
+        if start < map.from && end > map.from {
+            let section1 = min_map(start, map.from, layer_index, mappings);
+            let section2 = min_map(map.from, end, layer_index, mappings);
+            return section1.min(section2);
+        }
+        j += 1;
+    }
+    min_map(start, end, layer_index + 1, mappings)
+}
+pub fn part2_old(lines: &Vec<String>) -> String {
     let data = import(lines);
     let mapping = data.collapse_mappings();
     let new_seeds: Vec<RangeInclusive<usize>> = (0..data.seeds.len())
