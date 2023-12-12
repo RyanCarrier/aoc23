@@ -36,6 +36,7 @@ const DAYS: [Problem; 11] = [
     days::day9::DAY9,
     days::day10::DAY10,
     days::day11::DAY11,
+    days::day12::DAY12,
 ];
 const JAMZ: [Problem; 1] = [jamz::day1::DAY1];
 
