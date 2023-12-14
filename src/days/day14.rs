@@ -33,6 +33,7 @@ pub fn part1(lines: &Vec<String>) -> String {
     }
     format!("{:?}", result)
 }
+#[allow(dead_code)]
 fn print(lines: &Vec<Vec<u8>>) {
     println!("======");
     for line in lines {
