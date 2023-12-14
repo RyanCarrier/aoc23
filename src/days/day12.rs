@@ -22,6 +22,14 @@ impl Day12Data {
             memo: HashMap::new(),
         }
     }
+    fn process2(&mut self) -> Vec<usize> {
+        self.springs
+            .clone()
+            .iter_mut()
+            .map(|s| s.handle2(0, 0))
+            .collect()
+    }
+    //could go memoized or try do something with nPr
     fn process(&mut self) -> Vec<usize> {
         self.springs
             .clone()
@@ -72,6 +80,7 @@ impl Day12Data {
 struct Spring {
     records: Vec<u8>,
     damaged: Vec<usize>,
+    memo: Vec<Vec<Option<usize>>>,
 }
 impl Debug for Spring {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -91,18 +100,19 @@ impl Spring {
         while records.contains("..") {
             records = records.replace("..", ".");
         }
-        let mut spring = Spring {
+        let damaged: Vec<usize> = split
+            .next()
+            .unwrap()
+            .trim()
+            .split(',')
+            .map(|x| x.parse().unwrap())
+            .collect();
+        let memo = vec![vec![None; damaged.len()]; records.len()];
+        Spring {
             records: records.into_bytes(),
-            damaged: split
-                .next()
-                .unwrap()
-                .trim()
-                .split(',')
-                .map(|x| x.parse().unwrap())
-                .collect(),
-        };
-        spring.trim();
-        spring
+            damaged,
+            memo,
+        }
     }
     fn clone_unknown(&self, damaged: bool) -> Self {
         let mut records = self.records.clone();
@@ -110,6 +120,7 @@ impl Spring {
         Spring {
             records,
             damaged: self.damaged.clone(),
+            memo: self.memo.clone(),
         }
     }
     fn can_cut(&self) -> bool {
@@ -123,12 +134,24 @@ impl Spring {
             self.damaged[0] == self.records.len() || self.records[self.damaged[0]] != DAMAGED;
         can_fit_damaged && next_token_ok
     }
+    fn can_cut2(&self, index: usize, damaged_index: usize) -> bool {
+        let can_fit_damaged = self.damaged[damaged_index] <= self.records[index..].len()
+            && self.records[index..index + self.damaged[damaged_index]]
+                .iter()
+                .all(|x| *x != OPERATIONAL);
+        //verify we are at the end of the record OR the next token can be used as a
+        //seperator (either damaged or unknown)
+        let next_token_ok = index + self.damaged[damaged_index] == self.records.len()
+            || self.records[index + self.damaged[damaged_index]] != DAMAGED;
+        can_fit_damaged && next_token_ok
+    }
 
     fn clone_cut(&self) -> Self {
         if self.records.len() == self.damaged[0] {
             return Spring {
                 records: vec![],
                 damaged: self.damaged[1..].to_vec(),
+                memo: vec![],
             };
         }
         let index_from = self.damaged[0] + 1;
@@ -136,6 +159,7 @@ impl Spring {
             //becuase we must also cut the .
             records: self.records[index_from..].to_vec(),
             damaged: self.damaged[1..].to_vec(),
+            memo: vec![],
         }
     }
     fn trim(&mut self) -> bool {
@@ -150,6 +174,40 @@ impl Spring {
         }
         result
     }
+    fn handle2(&mut self, index: usize, damaged_index: usize) -> usize {
+        if index >= self.records.len() {
+            return 0;
+        }
+        if self.damaged.len() == damaged_index {
+            if self.records[index..].iter().any(|&x| x == DAMAGED) {
+                return 0;
+            } else {
+                return 1;
+            }
+        }
+        if self.damaged.len() - damaged_index - 1
+            + self.damaged[damaged_index..].iter().sum::<usize>()
+            > self.records[index..].len()
+        {
+            return 0;
+        }
+        if let Some(result) = self.memo[index][damaged_index] {
+            return result;
+        }
+        if self.records[index] == OPERATIONAL {
+            return self.handle2(index + 1, damaged_index);
+        }
+        let mut result = 0;
+        if self.records[index] == UNKNOWN {
+            result += self.handle2(index + 1, damaged_index);
+        }
+        if self.can_cut2(index, damaged_index) {
+            // println!("cutting {:?} {:?}", index, damaged_index);
+            result += self.handle2(index + self.damaged[damaged_index], damaged_index + 1);
+        }
+        self.memo[index][damaged_index] = Some(result);
+        result
+    }
 }
 
 pub fn part1(lines: &Vec<String>) -> String {
@@ -160,7 +218,8 @@ pub fn part1(lines: &Vec<String>) -> String {
 pub fn part2(lines: &Vec<String>) -> String {
     let new_lines = part2_input(lines);
     let mut data = import(&new_lines);
-    format!("{:?}", data.process().iter().sum::<usize>())
+    //BROKEN LOL
+    format!("{:?}", data.process2().iter().sum::<usize>())
 }
 pub fn test_data() -> &'static str {
     "???.### 1,1,3

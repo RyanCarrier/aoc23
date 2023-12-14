@@ -18,7 +18,7 @@ struct Args {
     test: bool,
     #[arg(short, long)]
     benchmark: bool,
-    #[arg(short, long, default_value_t = 1_000)]
+    #[arg(short, long, default_value_t = 100)]
     iterations: usize,
     #[arg(short, long)]
     virgin: bool,
