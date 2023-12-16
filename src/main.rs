@@ -24,7 +24,7 @@ struct Args {
     virgin: bool,
 }
 const YEAR: usize = 2023;
-const DAYS: [Problem; 15] = [
+const DAYS: [Problem; 16] = [
     days::day1::DAY1,
     days::day2::DAY2,
     days::day3::DAY3,
@@ -40,6 +40,7 @@ const DAYS: [Problem; 15] = [
     days::day13::DAY13,
     days::day14::DAY14,
     days::day15::DAY15,
+    days::day16::DAY16,
 ];
 const JAMZ: [Problem; 1] = [jamz::day1::DAY1];
 
