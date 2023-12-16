@@ -6,6 +6,7 @@ pub const DAY16: Problem = Problem {
     part2,
     test_data: Some(test_data),
 };
+#[derive(Clone)]
 struct Day16Data {
     data: Vec<Vec<Mirror>>,
     //N, E, S, W
@@ -14,6 +15,13 @@ struct Day16Data {
 impl Day16Data {
     fn start(&mut self) {
         self.step((0, 0), 1)
+    }
+    fn result(&self) -> usize {
+        self.memo
+            .iter()
+            .flatten()
+            .filter(|x| x[0] || x[1] || x[2] || x[3])
+            .count()
     }
     fn step(&mut self, start: (usize, usize), dir: usize) {
         let yx_ok =
@@ -114,17 +122,30 @@ impl Mirror {
 pub fn part1(lines: &Vec<String>) -> String {
     let mut data = import(lines);
     data.start();
-    data.memo
-        .iter()
-        .flatten()
-        .filter(|x| x[0] || x[1] || x[2] || x[3])
-        .count()
-        .to_string()
+    data.result().to_string()
 }
 
 pub fn part2(lines: &Vec<String>) -> String {
-    // let data = import(lines);
-    "".to_owned()
+    let original = import(lines);
+    let mut best = 0;
+    let ymax = original.data.len() - 1;
+    let xmax = original.data[0].len() - 1;
+    let mut try_best = |y: usize, x: usize, dir: usize| {
+        let mut data = original.clone();
+        data.step((y, x), dir);
+        best = best.max(data.result())
+    };
+    for y in 0..original.data.len() {
+        for (x, dir) in [(0, 1), (xmax, 3)] {
+            try_best(y, x, dir);
+        }
+    }
+    for x in 0..original.data[0].len() {
+        for (y, dir) in [(0, 2), (ymax, 0)] {
+            try_best(y, x, dir);
+        }
+    }
+    best.to_string()
 }
 pub fn test_data() -> &'static str {
     ".|...\\....
