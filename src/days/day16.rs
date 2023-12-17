@@ -30,31 +30,19 @@ impl Day16Data {
                 return;
             }
             self.memo[y][x][dir] = true;
-            match self.data[y][x] {
-                Mirror::Vertical => {
-                    if dir % 2 != 0 {
-                        return self.split(y, x, 0, 2);
-                    }
-                }
-                Mirror::Horizontal => {
-                    if dir % 2 != 1 {
-                        return self.split(y, x, 3, 1);
-                    }
-                }
-                Mirror::FwdDiagonal => {
-                    return self.dir_step(y, x, dir ^ 1);
-                }
-                Mirror::BwdDiagonal => {
-                    return self.dir_step(y, x, 3 - dir);
-                }
-                Mirror::None => (),
+            match (self.data[y][x], dir % 2) {
+                //match if not continueing straight
+                (Mirror::Vertical, 1) | (Mirror::Horizontal, 0) => return self.split(y, x, dir),
+                (Mirror::FwdDiagonal, _) => return self.dir_step(y, x, dir ^ 1),
+                (Mirror::BwdDiagonal, _) => return self.dir_step(y, x, 3 - dir),
+                _ => (),
             }
             (y, x) = self.xy_dir(y, x, dir);
         }
     }
-    fn split(&mut self, y: usize, x: usize, dir: usize, dir2: usize) {
-        self.dir_step(y, x, dir);
-        self.dir_step(y, x, dir2);
+    fn split(&mut self, y: usize, x: usize, dir: usize) {
+        self.dir_step(y, x, (dir + 1) % 4);
+        self.dir_step(y, x, (dir + 3) % 4);
     }
     fn dir_step(&mut self, y: usize, x: usize, dir: usize) {
         self.step(self.xy_dir(y, x, dir), dir)
@@ -87,7 +75,7 @@ impl Day16Data {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 enum Mirror {
     Vertical,
     Horizontal,
