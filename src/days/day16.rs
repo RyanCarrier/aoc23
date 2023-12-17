@@ -20,52 +20,41 @@ impl Day16Data {
         self.memo
             .iter()
             .flatten()
-            .filter(|x| x[0] || x[1] || x[2] || x[3])
+            .filter(|x| x.iter().any(|y| *y))
             .count()
     }
     fn step(&mut self, start: (usize, usize), dir: usize) {
-        let yx_ok =
-            |y: usize, x: usize| x <= (self.data[0].len() - 1) && y <= (self.data.len() - 1);
         let (mut y, mut x) = start;
-        if !yx_ok(y, x) {
-            return;
-        }
-        if self.memo[y][x][dir] {
-            return;
-        }
         loop {
-            if !yx_ok(y, x) {
+            if x >= self.data[0].len() || y >= self.data.len() || self.memo[y][x][dir] {
                 return;
             }
             self.memo[y][x][dir] = true;
-            // self.print();
             match self.data[y][x] {
                 Mirror::Vertical => {
                     if dir % 2 != 0 {
-                        self.dir_step(y, x, 0);
-                        self.dir_step(y, x, 2);
-                        break;
+                        return self.split(y, x, 0, 2);
                     }
                 }
                 Mirror::Horizontal => {
                     if dir % 2 != 1 {
-                        self.dir_step(y, x, 3);
-                        self.dir_step(y, x, 1);
-                        break;
+                        return self.split(y, x, 3, 1);
                     }
                 }
                 Mirror::FwdDiagonal => {
-                    self.dir_step(y, x, dir ^ 1);
-                    break;
+                    return self.dir_step(y, x, dir ^ 1);
                 }
                 Mirror::BwdDiagonal => {
-                    self.dir_step(y, x, 3 - dir);
-                    break;
+                    return self.dir_step(y, x, 3 - dir);
                 }
                 Mirror::None => (),
             }
             (y, x) = self.xy_dir(y, x, dir);
         }
+    }
+    fn split(&mut self, y: usize, x: usize, dir: usize, dir2: usize) {
+        self.dir_step(y, x, dir);
+        self.dir_step(y, x, dir2);
     }
     fn dir_step(&mut self, y: usize, x: usize, dir: usize) {
         self.step(self.xy_dir(y, x, dir), dir)
