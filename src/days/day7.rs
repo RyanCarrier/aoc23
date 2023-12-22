@@ -32,10 +32,11 @@ impl Hand {
         let contents = contents.into_bytes();
         let mut freq = [0_u8; 13];
         let mut value = 0;
+        let values = if pt2 { PT2_VALUES } else { VALUES };
         contents.iter().rev().enumerate().for_each(|(i, x)| {
-            let values = if pt2 { PT2_VALUES } else { VALUES };
             let index: usize = values.iter().position(|y| y == x).unwrap() as usize;
             if !pt2 || *x != JOKER {
+                // don't count jokers, (they are only jokers if we are in part2)
                 freq[index as usize] += 1;
             }
             //these could/should have been 13.pow but i started with 13^i and obviously that didn't
