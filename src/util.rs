@@ -77,9 +77,9 @@ impl VectorArc {
 }
 #[derive(Copy, Clone, Eq, Debug)]
 #[allow(dead_code)]
-struct Vertex {
-    index: usize,
-    dist: usize,
+pub struct Vertex {
+    pub index: usize,
+    pub dist: usize,
 }
 impl PartialEq for Vertex {
     fn eq(&self, other: &Self) -> bool {
