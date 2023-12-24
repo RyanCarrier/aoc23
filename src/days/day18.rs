@@ -56,18 +56,13 @@ impl Day18Data {
             ((max_y - min_y) as usize, (max_x - min_x) as usize),
         )
     }
-    fn calculate_lagoon(&self) -> usize {
+    fn calculate_lagoon(&self, print: bool) -> usize {
         let mut total = 0;
         let (mut path, (y_max, x_max)) = self.make_path();
-        // let (mut path, (y_max, _)) = self.make_path();
         //sort by y, so we can then hopefully just scan down rows
         //this will be in reverse order to make popping faster, could just dequeue but whatever
         path.sort_by(|a, b| a.0.cmp(&b.0).reverse());
         let mut prev_line: VecDeque<(usize, usize)> = VecDeque::new();
-        // println!("0123456");
-        println!("ymax, xmax: {}, {}", y_max, x_max);
-        //sleep for 3s
-        // std::thread::sleep(std::time::Duration::from_secs(3));
         let mut ys = path
             .iter()
             .map(|(y, _)| vec![*y - 1, *y, *y + 1])
@@ -77,13 +72,8 @@ impl Day18Data {
             .filter(|y| *y <= y_max)
             .collect::<Vec<usize>>();
         ys.sort();
-        println!("ys: {:?}", ys);
         for i in 0..ys.len() {
             let yi = ys[i];
-            // println!("yi: {},", yi);
-            // if prev_line.len() % 2 == 1 {
-            //     panic!("prev_line is odd, this means there is no opposing edge to the lagoon");
-            // }
             let mut built_current_line = vec![];
             let mut current_line = VecDeque::new();
             if path.is_empty() {
@@ -91,14 +81,8 @@ impl Day18Data {
             }
             let mut temp = vec![];
             while !path.is_empty() && path.last().unwrap().0 == yi {
-                //TODO: probs check path empty here too lol
                 temp.push(path.pop().unwrap().1);
             }
-            // if temp.is_empty() {
-            //     println!("prev_line: {:?}", prev_line);
-            //     total += prev_line.iter().fold(0, |acc, (a, b)| acc + b - a + 1);
-            //     continue;
-            // }
             temp.sort();
             if temp.len() % 2 == 1 {
                 panic!("temp is odd, this means there is no opposing edge to the lagoon");
@@ -107,20 +91,11 @@ impl Day18Data {
                 current_line.push_back((temp[i], temp[i + 1]));
                 built_current_line.push((temp[i], temp[i + 1]));
             }
-            //we are sorted
-            // current_line.sort_by(|a, b| a.1.cmp(&b.1));
 
             let mut next_line = VecDeque::new();
-            // current_line.iter().for_each(|(a, b)| {
-            //     line_total += b - a;
-            // });
-            // prev_line.iter().for_each(|(a, b)| {
-            //     line_total += b - a + 1;
-            // });
             let mut prev_o = prev_line.pop_front();
             let mut current_o = current_line.pop_front();
-            let mut add_to_next = |next_line: &mut VecDeque<(usize, usize)>,
-                                   item: (usize, usize)| {
+            let add_to_next = |next_line: &mut VecDeque<(usize, usize)>, item: (usize, usize)| {
                 if next_line.is_empty() {
                     next_line.push_back(item);
                 } else {
@@ -131,9 +106,14 @@ impl Day18Data {
                             next_line[li].1 = item.1;
                         }
                     } else {
-                        next_line.push_back(item);
+                        if nl.1 == item.0 {
+                            next_line[li].1 = item.1;
+                        } else {
+                            next_line.push_back(item);
+                        }
                     }
                 }
+                // print!("\tnl:{:?}", next_line);
             };
             loop {
                 match (prev_o, current_o) {
@@ -149,6 +129,10 @@ impl Day18Data {
                         current_o = current_line.pop_front();
                     }
                     (Some(prev), Some(current)) => {
+                        if current.0 >= current.1 || prev.0 >= prev.1 {
+                            println!("current: {:?}, prev: {:?}", current, prev);
+                            panic!("current or prev is invalid, this should never happen");
+                        }
                         if current.0 > prev.1 {
                             //prev entirelly before
                             built_current_line.push(prev);
@@ -157,83 +141,59 @@ impl Day18Data {
                         } else if current.1 < prev.0 {
                             //prev entirelly after
                             built_current_line.push(current);
-                            // next_line.push_back(current);
                             add_to_next(&mut next_line, current);
-                            // println!("b4nextline: {:?}", next_line);
                             current_o = current_line.pop_front();
                         } else {
-                            // print!("\tVVVVVVV\toverlap: c {:?} p {:?}", current, prev);
-                            match (current.0.cmp(&prev.0), current.1.cmp(&prev.1)) {
-                                (std::cmp::Ordering::Less, std::cmp::Ordering::Less) => {
-                                    // print!(" LT LT");
-                                    // panic!("idk how this would happen, overlap without matching bounds, lt lt");
-                                    // this is current expanding left (curr1==prev0)
-                                    built_current_line.push((current.0, prev.1));
-                                    prev_o = Some((current.0, prev.1));
-                                    current_o = current_line.pop_front();
+                            if current == prev {
+                                built_current_line.push(prev);
+                                current_o = current_line.pop_front();
+                                prev_o = prev_line.pop_front();
+                            } else if current.0 == prev.1 {
+                                //expand right
+                                let new = (prev.0, current.1);
+                                built_current_line.push(new);
+                                if new.0 >= new.1 {
+                                    panic!("new is invalid, this should never happen 0==1");
                                 }
-                                (std::cmp::Ordering::Greater, std::cmp::Ordering::Greater) => {
-                                    // panic!("idk how this would happen, overlap without matching bounds, gt gt");
-                                    // this is current expanding right (curr1==prev0)
-                                    // print!(" GT GT");
-                                    built_current_line.push((prev.0, current.1));
-                                    next_line.push_back((prev.0, current.1));
-                                    // println!("GTGT=next_line: {:?}", next_line);
-                                    current_o = current_line.pop_front();
+                                prev_o = Some(new);
+                                current_o = current_line.pop_front();
+                            } else if current.1 == prev.0 {
+                                //expand left
+                                let new = (current.0, prev.1);
+                                built_current_line.push(new);
+                                if new.0 >= new.1 {
+                                    panic!("new is invalid, this should never happen 1==0");
                                 }
-                                (std::cmp::Ordering::Less, std::cmp::Ordering::Greater) => {
-                                    next_line.push_back((current.0, current.1));
-                                    current_o = current_line.pop_front();
-                                    prev_o = prev_line.pop_front();
-
-                                    // panic!("idk how this would happen, overlap without matching bounds, lt gt");
-                                    // //prev is inside current
-                                    // // next_line.push_back((current.0, prev.0));
-                                    // // current_o = Some((current.1, prev.1));
+                                prev_o = Some(new);
+                                current_o = current_line.pop_front();
+                            } else if current.0 == prev.0 {
+                                //reduce inner left
+                                let new = (current.1, prev.1);
+                                built_current_line.push(prev);
+                                current_o = current_line.pop_front();
+                                if new.0 >= new.1 {
+                                    panic!("new is invalid, this should never happen 0==0");
                                 }
-                                (std::cmp::Ordering::Greater, std::cmp::Ordering::Less) => {
-                                    //current is inside prev
-                                    next_line.push_back((current.0, prev.0));
-                                    prev_o = Some((current.1, prev.1));
-                                    current_o = current_line.pop_front();
+                                prev_o = Some(new);
+                            } else if current.1 == prev.1 {
+                                //reduce inner right
+                                let new = (prev.0, current.0);
+                                built_current_line.push(prev);
+                                if new.0 >= new.1 {
+                                    panic!("new is invalid, this should never happen 1==1");
                                 }
-                                (std::cmp::Ordering::Equal, std::cmp::Ordering::Less) => {
-                                    // next_line.push_back((current.1, prev.1));
-                                    // print!(" EQ LT");
-                                    built_current_line.push((current.0, prev.1));
-                                    prev_o = Some((current.1, prev.1));
-                                    current_o = current_line.pop_front();
-                                }
-                                (std::cmp::Ordering::Less, std::cmp::Ordering::Equal) => {
-                                    // next_line.push_back((current.0, current.1));
-                                    // print!(" LT EQ");
-                                    built_current_line.push((current.0, prev.1));
-                                    prev_o = Some((current.0, current.1));
-                                    current_o = current_line.pop_front();
-                                }
-                                (std::cmp::Ordering::Equal, std::cmp::Ordering::Greater) => {
-                                    // panic!("can't conceptualise this one yet so panic");
-                                    next_line.push_back((prev.0, current.1));
-                                    prev_o = prev_line.pop_front();
-                                    current_o = current_line.pop_front();
-                                    // current_o = Some((current.1, prev.1));
-                                }
-                                (std::cmp::Ordering::Greater, std::cmp::Ordering::Equal) => {
-                                    // print!(" GT EQ");
-                                    built_current_line.push((prev.0, current.1));
-                                    next_line.push_back((prev.0, current.0));
-                                    // println!("GTEQ=next_line: {:?}", next_line);
-                                    // next_line.push_back((current.0, prev.1));
-                                    prev_o = prev_line.pop_front();
-                                    current_o = current_line.pop_front();
-                                    // panic!("can't conceptualise this one yet so panic");
-                                    //prev is inside current
-                                }
-                                (std::cmp::Ordering::Equal, std::cmp::Ordering::Equal) => {
-                                    // print!(" EQ EQ");
-                                    prev_o = prev_line.pop_front();
-                                    current_o = current_line.pop_front();
-                                }
+                                prev_o = Some(new);
+                                current_o = current_line.pop_front();
+                                // println!("current: {:?}, prev: {:?}", current, prev);
+                            } else if current.0 > prev.0 && current.1 < prev.1 {
+                                built_current_line.push(prev);
+                                let block_1 = (prev.0, current.0);
+                                let block_2 = (current.1, prev.1);
+                                add_to_next(&mut next_line, block_1);
+                                prev_o = Some(block_2);
+                                current_o = current_line.pop_front();
+                            } else {
+                                panic!("This should never happen");
                             }
                             //overlap
                         }
@@ -242,7 +202,6 @@ impl Day18Data {
             }
             //fold built current line
             built_current_line.sort_by(|a, b| a.0.cmp(&b.0).reverse());
-            // print!("  built_current_line: {:?}", built_current_line);
             let mut new_built_line = vec![];
             let mut trench = built_current_line.pop().unwrap();
             while let Some(current) = built_current_line.pop() {
@@ -254,7 +213,6 @@ impl Day18Data {
                 }
             }
             new_built_line.push(trench);
-            // print!("  new_built_line: {:?}", new_built_line);
             let line_total = new_built_line.iter().fold(0, |acc, (a, b)| acc + b - a + 1);
             let mult = if i < ys.len() - 1 {
                 ys[i + 1] - ys[i]
@@ -263,25 +221,24 @@ impl Day18Data {
             };
             total += line_total * mult;
             prev_line = next_line;
-            let mut i = 0;
-            println!();
-            // print!("\t{}\t", line_total);
-            // println!("yi {}: line_total: {}", yi, line_total);
-            for x in 0..=x_max {
-                while i < new_built_line.len() && new_built_line[i].1 < x {
-                    i += 1;
-                }
-                if i >= new_built_line.len() {
-                    print!(".");
-                    continue;
-                }
-                if x >= new_built_line[i].0 && x <= new_built_line[i].1 {
-                    print!("#");
-                } else {
-                    print!(".");
+            if print {
+                let mut i = 0;
+                println!();
+                for x in 0..=x_max {
+                    while i < new_built_line.len() && new_built_line[i].1 < x {
+                        i += 1;
+                    }
+                    if i >= new_built_line.len() {
+                        print!(".");
+                        continue;
+                    }
+                    if x >= new_built_line[i].0 && x <= new_built_line[i].1 {
+                        print!("#");
+                    } else {
+                        print!(".");
+                    }
                 }
             }
-            // print!("\tyi{}: next_line {:?}", yi, prev_line);
         }
         total
     }
@@ -294,7 +251,7 @@ pub fn part1(lines: &Vec<String>) -> String {
     //63623 too high
     //47722 incorrect
     //42276 incorrect
-    data.calculate_lagoon().to_string()
+    data.calculate_lagoon(false).to_string()
 }
 
 pub fn part2(lines: &Vec<String>) -> String {
