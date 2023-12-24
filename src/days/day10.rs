@@ -11,6 +11,7 @@ const PIPES_INSTANCE: [[bool; 4]; 6] = [
     [false, false, true, true],
     [false, true, true, false],
 ];
+//use SWAP_PIPES to know if we are swapping whether we are inside or not when passing through
 const SWAP_PIPES: [[bool; 4]; 3] = [PIPES_INSTANCE[0], PIPES_INSTANCE[2], PIPES_INSTANCE[3]];
 
 #[derive(PartialEq, Clone, Copy)]
