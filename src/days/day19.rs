@@ -8,6 +8,7 @@ pub const DAY19: Problem = Problem {
     part2,
     test_data: Some(test_data),
 };
+#[derive(Clone, Copy)]
 enum Category {
     X = 0,
     M,
@@ -21,35 +22,37 @@ impl Category {
             'm' => Category::M,
             'a' => Category::A,
             's' => Category::S,
-            _ => panic!("Invalid category"),
+            _ => panic!("Invalid category, {}", input),
         }
     }
 }
-enum Result<'a> {
-    Category(&'a str),
+#[derive(Clone, Debug)]
+enum Result {
+    Category(String),
     Reject,
     Accept,
 }
-impl Result<'_> {
+impl Result {
     fn new(input: &str) -> Self {
         match input.len() {
             0 => panic!("Invalid result"),
             1 => match input {
                 "R" => Result::Reject,
                 "A" => Result::Accept,
-                _ => Result::Category(input),
+                _ => Result::Category(input.to_string()),
             },
-            _ => Result::Category(input),
+            _ => Result::Category(input.to_string()),
         }
     }
 }
-struct Rule<'a> {
+#[derive(Clone)]
+struct Rule {
     category: Category,
     lt: bool,
     value: usize,
-    result: Result<'a>,
+    result: Result,
 }
-impl<'a> Rule<'a> {
+impl Rule {
     fn new(input: &str) -> Self {
         let mut chars = input.chars();
         let category = Category::new(chars.next().unwrap());
@@ -68,95 +71,93 @@ impl<'a> Rule<'a> {
             result,
         }
     }
+    fn run(&self, input: Input) -> Option<Result> {
+        // T T=T, F F=T, else F
+        let is_lt = input[self.category as usize] < self.value;
+        if !(self.lt ^ is_lt) {
+            Some(self.result.clone())
+        } else {
+            None
+        }
+    }
 }
-struct RuleSet<'a> {
-    rules: Vec<Rule<'a>>,
-    result: Result<'a>,
+struct RuleSet {
+    rules: Vec<Rule>,
+    result: Result,
 }
-impl<'a> RuleSet<'_> {
-    fn new(input: &str) -> (&'a str, Self) {
-        let (name, remaining) = input.split_once(":").unwrap();
+impl RuleSet {
+    fn new(input: &str) -> (String, Self) {
+        let (name, remaining) = input.split_once("{").unwrap();
         let mut raw_rules: Vec<&str> = remaining[0..remaining.len() - 1].split(",").collect();
         (
-            name,
+            name.to_string(),
             RuleSet {
                 result: Result::new(raw_rules.pop().unwrap()),
-                rules: raw_rules.iter().map(Rule::new),
+                rules: raw_rules.iter().map(|x| Rule::new(*x)).collect(),
             },
         )
+    }
+    fn run(&self, input: Input) -> Result {
+        for rule in &self.rules {
+            if let Some(result) = rule.run(input) {
+                return result;
+            }
+        }
+        self.result.clone()
     }
 }
 type Input = [usize; 4];
 
 struct Day19Data {
-    rules: HashMap<&str, RuleSet>,
+    rules: HashMap<String, RuleSet>,
     inputs: Vec<Input>,
 }
 impl Day19Data {
     fn new(lines: &Vec<String>) -> Self {
-        let mut trimmed: Vec<&String> = lines.iter().map(|x| x.trim()).collect();
+        let trimmed: Vec<&str> = lines.iter().map(|x| x.trim()).collect();
         let split = trimmed.iter().position(|x| x.is_empty()).unwrap();
         let (raw_rules, raw_inputs) = trimmed.split_at(split);
         Day19Data {
             rules: raw_rules
                 .iter()
-                .map(|x| x.split(": "))
-                .map(|mut x| {
-                    let category = match x.next().unwrap() {
-                        "x" => Category::X,
-                        "m" => Category::M,
-                        "a" => Category::A,
-                        "s" => Category::S,
-                        _ => panic!("Invalid category"),
-                    };
-                    let mut rules = x.next().unwrap().split(" | ");
-                    let mut rule_set = RuleSet {
-                        rules: Vec::new(),
-                        result: Result::Reject,
-                    };
-                    for rule in rules {
-                        let mut rule = rule.split(" ");
-                        let lt = match rule.next().unwrap() {
-                            "<" => true,
-                            ">" => false,
-                            _ => panic!("Invalid rule"),
-                        };
-                        let value = rule.next().unwrap().parse().unwrap();
-                        let result = match rule.next().unwrap() {
-                            "x" => Result::Category("x"),
-                            "m" => Result::Category("m"),
-                            "a" => Result::Category("a"),
-                            "s" => Result::Category("s"),
-                            "R" => Result::Reject,
-                            "A" => Result::Accept,
-                            _ => panic!("Invalid result"),
-                        };
-                        rule_set.rules.push(Rule {
-                            category,
-                            lt,
-                            value,
-                            result,
-                        });
-                    }
-                    (category, rule_set)
+                .map(|x| {
+                    let (name, rule_set) = RuleSet::new(x);
+                    (name, rule_set)
                 })
                 .collect(),
-            inputs: raw_inputs.iter().map(|x| {
-                let mut split = x.split(",");
-                [
-                    split.next().unwrap()[2..].parse().unwrap(),
-                    split.next().unwrap()[2..].parse().unwrap(),
-                    split.next().unwrap()[2..].parse().unwrap(),
-                    split.next().unwrap()[2..].parse().unwrap(),
-                ]
-            }),
+            inputs: raw_inputs[1..]
+                .iter()
+                .filter(|x| !x.is_empty())
+                .map(|x| {
+                    let mut split = x[1..x.len() - 1].split(",");
+                    [
+                        split.next().unwrap()[2..].parse().unwrap(),
+                        split.next().unwrap()[2..].parse().unwrap(),
+                        split.next().unwrap()[2..].parse().unwrap(),
+                        split.next().unwrap()[2..].parse().unwrap(),
+                    ]
+                })
+                .collect(),
         }
     }
 }
 
 pub fn part1(lines: &Vec<String>) -> String {
     let data = import(lines);
-    "".to_owned()
+    let mut total = 0;
+    for input in data.inputs {
+        let mut result = data.rules["in"].run(input);
+        loop {
+            match result {
+                Result::Category(name) => {
+                    result = data.rules[&name].run(input);
+                }
+                Result::Reject => break,
+                Result::Accept => break total += input.iter().sum::<usize>(),
+            }
+        }
+    }
+    total.to_string()
 }
 
 pub fn part2(lines: &Vec<String>) -> String {
@@ -183,53 +184,6 @@ hdj{m>838:A,pv}
 {x=2127,m=1623,a=2188,s=1013}"
 }
 
-fn import(lines: &Vec<String>) -> Day17Data {
-    let mut trimmed = lines.iter().map(|x| x.trim());
-    let split = trimmed.position(|x| x.is_empty());
-    Day19Data {
-        rules: trimmed
-            .take(split.unwrap())
-            .map(|x| x.split(": "))
-            .map(|mut x| {
-                let category = match x.next().unwrap() {
-                    "x" => Category::X,
-                    "m" => Category::M,
-                    "a" => Category::A,
-                    "s" => Category::S,
-                    _ => panic!("Invalid category"),
-                };
-                let mut rules = x.next().unwrap().split(" | ");
-                let mut rule_set = RuleSet {
-                    rules: Vec::new(),
-                    result: Result::Reject,
-                };
-                for rule in rules {
-                    let mut rule = rule.split(" ");
-                    let lt = match rule.next().unwrap() {
-                        "<" => true,
-                        ">" => false,
-                        _ => panic!("Invalid rule"),
-                    };
-                    let value = rule.next().unwrap().parse().unwrap();
-                    let result = match rule.next().unwrap() {
-                        "x" => Result::Category("x"),
-                        "m" => Result::Category("m"),
-                        "a" => Result::Category("a"),
-                        "s" => Result::Category("s"),
-                        "R" => Result::Reject,
-                        "A" => Result::Accept,
-                        _ => panic!("Invalid result"),
-                    };
-                    rule_set.rules.push(Rule {
-                        category,
-                        lt,
-                        value,
-                        result,
-                    });
-                }
-                (category, rule_set)
-            })
-            .collect(),
-        inputs: todo!(),
-    }
+fn import(lines: &Vec<String>) -> Day19Data {
+    Day19Data::new(lines)
 }
