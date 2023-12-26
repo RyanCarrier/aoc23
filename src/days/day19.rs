@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::RangeInclusive};
 
 use crate::util::Problem;
 
@@ -8,25 +8,7 @@ pub const DAY19: Problem = Problem {
     part2,
     test_data: Some(test_data),
 };
-#[derive(Clone, Copy)]
-enum Category {
-    X = 0,
-    M,
-    A,
-    S,
-}
-impl Category {
-    fn new(input: char) -> Self {
-        match input {
-            'x' => Category::X,
-            'm' => Category::M,
-            'a' => Category::A,
-            's' => Category::S,
-            _ => panic!("Invalid category, {}", input),
-        }
-    }
-}
-#[derive(Clone, Debug)]
+#[derive(Clone, Eq, PartialEq)]
 enum Result {
     Category(String),
     Reject,
@@ -47,7 +29,7 @@ impl Result {
 }
 #[derive(Clone)]
 struct Rule {
-    category: Category,
+    category: usize,
     lt: bool,
     value: usize,
     result: Result,
@@ -55,20 +37,18 @@ struct Rule {
 impl Rule {
     fn new(input: &str) -> Self {
         let mut chars = input.chars();
-        let category = Category::new(chars.next().unwrap());
+        let category = "xmas".find(chars.next().unwrap()).unwrap();
         let lt = match chars.next().unwrap() {
             '<' => true,
             '>' => false,
             _ => panic!("Invalid rule"),
         };
         let (num_str, result_str) = input[2..].split_once(":").unwrap();
-        let value = num_str.parse().unwrap();
-        let result = Result::new(result_str);
         Rule {
             category,
             lt,
-            value,
-            result,
+            value: num_str.parse().unwrap(),
+            result: Result::new(result_str),
         }
     }
     fn run(&self, input: Input) -> Option<Result> {
@@ -140,6 +120,50 @@ impl Day19Data {
                 .collect(),
         }
     }
+    fn range_split(
+        &self,
+        cat: &String,
+        rule_number: usize,
+        range: [RangeInclusive<usize>; 4],
+    ) -> usize {
+        let ruleset = &self.rules[cat];
+        if rule_number >= ruleset.rules.len() {
+            return match &ruleset.result {
+                Result::Category(cat) => self.range_split(&cat, 0, range),
+                Result::Reject => 0,
+                Result::Accept => range.iter().map(|r| r.end() - r.start() + 1).product(),
+            };
+        }
+        let rule = &ruleset.rules[rule_number];
+        let range_value = &range[rule.category];
+        if (rule.lt && rule.value <= *range_value.start())
+            || (!rule.lt && rule.value >= *range_value.end())
+        {
+            //failed whole range
+            return self.range_split(cat, rule_number + 1, range);
+        }
+        if (rule.lt && rule.value > *range_value.end())
+            || (!rule.lt && rule.value < *range_value.start())
+        {
+            //passed whole range
+            return match &rule.result {
+                Result::Category(cat) => self.range_split(cat, 0, range),
+                Result::Reject => 0,
+                Result::Accept => range.iter().map(|r| r.end() - r.start() + 1).product(),
+            };
+        }
+        let mut pass_range = range.clone();
+        let mut fail_range = range.clone();
+        if rule.lt {
+            pass_range[rule.category] = *range[rule.category].start()..=rule.value - 1;
+            fail_range[rule.category] = rule.value..=*range[rule.category].end();
+        } else {
+            fail_range[rule.category] = *range[rule.category].start()..=rule.value;
+            pass_range[rule.category] = rule.value + 1..=*range[rule.category].end();
+        }
+        return self.range_split(cat, rule_number, pass_range)
+            + self.range_split(cat, rule_number, fail_range);
+    }
 }
 
 pub fn part1(lines: &Vec<String>) -> String {
@@ -161,8 +185,16 @@ pub fn part1(lines: &Vec<String>) -> String {
 }
 
 pub fn part2(lines: &Vec<String>) -> String {
-    let _ = import(lines);
-    "".to_owned()
+    let data = import(lines);
+    let default = 1_usize..=4000_usize;
+    let input_ranges: [RangeInclusive<usize>; 4] = [
+        default.clone(),
+        default.clone(),
+        default.clone(),
+        default.clone(),
+    ];
+    data.range_split(&"in".to_string(), 0, input_ranges)
+        .to_string()
 }
 pub fn test_data() -> &'static str {
     "px{a<2006:qkq,m>2090:A,rfg}
