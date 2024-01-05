@@ -11,12 +11,12 @@ struct Day20Data {
 }
 
 pub fn part1(lines: &Vec<String>) -> String {
-    let _ = import(lines);
+    // let _ = import(lines);
     "".to_owned()
 }
 
 pub fn part2(lines: &Vec<String>) -> String {
-    let _ = import(lines);
+    // let _ = import(lines);
     "".to_owned()
 }
 pub fn test_data() -> &'static str {
