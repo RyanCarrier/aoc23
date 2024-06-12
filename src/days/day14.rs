@@ -103,9 +103,13 @@ fn spin(lines: &mut Vec<Vec<u8>>) {
                         lines[rock_position][j] = ROCK;
                         lines[i][j] = EMPTY;
                     }
-                    rock_position -= 1;
+                    rock_position = if rock_position == 0 {
+                        0
+                    } else {
+                        rock_position - 1
+                    };
                 }
-                THING => rock_position = i - 1,
+                THING => rock_position = if i == 0 { 0 } else { i - 1 },
                 _ => {}
             }
         }
