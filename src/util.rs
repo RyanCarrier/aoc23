@@ -55,6 +55,13 @@ pub fn get_input_data(year: usize, day: usize) -> Vec<String> {
         // .header("cookie", format!("session={}", cookie))
         .send()
         .unwrap();
+    if !resp.status().is_success() {
+        panic!(
+            "Failed to get input data, {:?}\n{:?}",
+            resp.status(),
+            resp.text().unwrap()
+        );
+    }
     let body = resp.text().unwrap();
     body.split('\n').map(|x| x.to_owned()).collect()
 }
